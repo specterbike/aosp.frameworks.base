@@ -2105,10 +2105,15 @@ public final class PowerManagerService extends SystemService
                 if (nextProfileTimeout > 0) {
                     nextTimeout = Math.min(nextTimeout, nextProfileTimeout);
                 }
-
-                if (mUserActivitySummary != 0 && nextTimeout >= 0) {
-                    scheduleUserInactivityTimeout(nextTimeout);
-                }
+				//larkin@quectel modify for never screen off start
+                if (mScreenOffTimeoutSetting !=0) {
+					if (mUserActivitySummary != 0 && nextTimeout >= 0) {
+						scheduleUserInactivityTimeout(nextTimeout);
+					}
+				}else{
+					mUserActivitySummary |= USER_ACTIVITY_SCREEN_BRIGHT;
+				}
+				//larkin @quectel modify for never screen off end
             } else {
                 mUserActivitySummary = 0;
             }

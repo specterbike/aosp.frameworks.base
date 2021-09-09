@@ -1509,14 +1509,14 @@ class AlarmManagerService extends SystemService {
             // Ensure that we're booting with a halfway sensible current time.  Use the
             // most recent of Build.TIME, the root file system's timestamp, and the
             // value of the ro.build.date.utc system property (which is in seconds).
-            final long systemBuildTime =  Long.max(
+            /*final long systemBuildTime =  Long.max(
                     1000L * SystemProperties.getLong("ro.build.date.utc", -1L),
                     Long.max(Environment.getRootDirectory().lastModified(), Build.TIME));
             if (mInjector.getCurrentTimeMillis() < systemBuildTime) {
                 Slog.i(TAG, "Current time only " + mInjector.getCurrentTimeMillis()
                         + ", advancing to build time " + systemBuildTime);
                 mInjector.setKernelTime(systemBuildTime);
-            }
+            }*/
 
             // Determine SysUI's uid
             mSystemUiUid = mInjector.getSystemUiUid();

@@ -3151,6 +3151,27 @@ public class TelephonyManager {
     }
 
     /**
+     * @hide
+     */
+    public boolean isVerizon() {
+        String mccmnc = getSimOperator();
+        if ("311480".equals(mccmnc)
+                || "310590".equals(mccmnc)
+                || "310890".equals(mccmnc)
+                || "311270".equals(mccmnc)
+                || "312770".equals(mccmnc)) {
+            return true;
+        }
+        final boolean FORTEST = SystemProperties.getBoolean("persist.certification.mode.test", false);
+        if (FORTEST) {
+            if (mccmnc != null && mccmnc.startsWith("460")) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
      * Returns the MCC+MNC (mobile country code + mobile network code) of the
      * provider of the SIM. 5 or 6 decimal digits.
      * <p>
@@ -8891,7 +8912,14 @@ public class TelephonyManager {
      */
     @UnsupportedAppUsage(maxTargetSdk = Build.VERSION_CODES.P, trackingBug = 115609023)
     public void setBasebandVersionForPhone(int phoneId, String version) {
-        setTelephonyProperty(phoneId, TelephonyProperties.PROPERTY_BASEBAND_VERSION, version);
+		//larkin@quectel modify for baseband version repeat
+		if(SubscriptionManager.isValidPhoneId(phoneId)) {
+            String prop = TelephonyProperties.PROPERTY_BASEBAND_VERSION +
+                    ((phoneId == 0)?"":Integer.toString(phoneId));
+            SystemProperties.set(prop,version);
+        }
+        //setTelephonyProperty(phoneId, TelephonyProperties.PROPERTY_BASEBAND_VERSION, version);
+		//larkin@quectel modify for baseband version repeat
     }
 
     /**

@@ -5061,7 +5061,9 @@ public class PhoneWindowManager implements WindowManagerPolicy {
                 if (enable) {
                     if (localLOGV) Log.v(TAG, "setting lockscreen timer");
                     mHandler.removeCallbacks(mScreenLockTimeout); // remove any pending requests
-                    mHandler.postDelayed(mScreenLockTimeout, mLockScreenTimeout);
+					if(mLockScreenTimeout != 0){
+						mHandler.postDelayed(mScreenLockTimeout, mLockScreenTimeout);
+					}
                 } else {
                     if (localLOGV) Log.v(TAG, "clearing lockscreen timer");
                     mHandler.removeCallbacks(mScreenLockTimeout);
