@@ -3222,6 +3222,7 @@ public abstract class Context {
             USB_SERVICE,
             LAUNCHER_APPS_SERVICE,
             //@hide: SERIAL_SERVICE,
+            //@hide: GPIO_SERVICE,
             //@hide: HDMI_CONTROL_SERVICE,
             INPUT_SERVICE,
             DISPLAY_SERVICE,
@@ -4274,6 +4275,17 @@ public abstract class Context {
      * @hide
      */
     public static final String SERIAL_SERVICE = "serial";
+
+    /**
+     * Use with {@link #getSystemService(String)} to retrieve a {@link
+     * android.hardware.GpioManager} for access to gpio ports.
+     *
+     * @see #getSystemService(String)
+     * @see android.hardware.GpioManager
+     *
+     * @hide
+     */
+    public static final String GPIO_SERVICE = "gpio";
 
     /**
      * Use with {@link #getSystemService(String)} to retrieve a

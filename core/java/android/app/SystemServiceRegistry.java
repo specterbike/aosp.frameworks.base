@@ -62,6 +62,7 @@ import android.debug.AdbManager;
 import android.debug.IAdbManager;
 import android.hardware.ConsumerIrManager;
 import android.hardware.ISerialManager;
+import android.hardware.IGpioManager;
 import android.hardware.SensorManager;
 import android.hardware.SensorPrivacyManager;
 import android.hardware.SerialManager;
@@ -681,6 +682,14 @@ final class SystemServiceRegistry {
                 IBinder b = ServiceManager.getServiceOrThrow(Context.SERIAL_SERVICE);
                 return new SerialManager(ctx, ISerialManager.Stub.asInterface(b));
             }});
+
+        registerService(Context.GPIO_SERVICE, GpioManager.class,
+            new CachedServiceFetcher<GpioManager>() {
+        @Override
+        public GpioManager createService(ContextImpl ctx) throws ServiceNotFoundException {
+            IBinder b = ServiceManager.getServiceOrThrow(Context.GPIO_SERVICE);
+            return new GpioManager(ctx, IGpioManager.Stub.asInterface(b));
+        }});
 
         registerService(Context.VIBRATOR_SERVICE, Vibrator.class,
                 new CachedServiceFetcher<Vibrator>() {
