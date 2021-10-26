@@ -43,7 +43,7 @@ public class GpioManager {
         try {
             ParcelFileDescriptor pfd = mService.openGpioPort(gpio, direction);
             if (pfd != null) {
-                return pfd
+                return pfd;
             } else {
                 throw new IOException("Could not open Gpio port " + gpio);
             }

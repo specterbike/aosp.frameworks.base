@@ -66,6 +66,7 @@ import android.hardware.IGpioManager;
 import android.hardware.SensorManager;
 import android.hardware.SensorPrivacyManager;
 import android.hardware.SerialManager;
+import android.hardware.GpioManager;
 import android.hardware.SystemSensorManager;
 import android.hardware.biometrics.BiometricManager;
 import android.hardware.biometrics.IBiometricService;

@@ -19,7 +19,7 @@ public class GpioService extends IGpioManager.Stub {
         mContext = context;
     }
 
-    public ParcelFileDescriptor openGpio(int gpio, String direction) {
+    public ParcelFileDescriptor openGpioPort(int gpio, String direction) {
         mContext.enforceCallingOrSelfPermission(android.Manifest.permission.GPIO, null);
         return native_open(gpio, direction);
     }
