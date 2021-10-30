@@ -72,13 +72,19 @@ public class SerialChat extends Activity implements Runnable, TextView.OnEditorA
         super.onResume();
 
         String[] ports = mSerialManager.getSerialPorts();
+        Log.d(TAG, "GET PORTS: " + ports.length);
         if (ports != null && ports.length > 0) {
             try {
                 mSerialPort = mSerialManager.openSerialPort(ports[0], 115200);
                 if (mSerialPort != null) {
+                    Log.d(TAG, "SERIAL OPEN: " + ports[0]);
                     new Thread(this).start();
+                } else {
+                    Log.d(TAG, "SERIAL FAILED TO OPEN: " + ports[0]);
                 }
             } catch (IOException e) {
+                e.printStackTrace();
+                Log.d(TAG, "SERIAL FAILED TO OPEN: " + ports[0] + " " + e);
             }
         }
 
@@ -106,6 +112,7 @@ public class SerialChat extends Activity implements Runnable, TextView.OnEditorA
         if (/* actionId == EditorInfo.IME_ACTION_DONE && */ mSerialPort != null) {
             try {
                 String text = v.getText().toString();
+                text = text + "\r\n";
                 Log.d(TAG, "write: " + text);
                 byte[] bytes = text.getBytes();
                 mOutputBuffer.clear();

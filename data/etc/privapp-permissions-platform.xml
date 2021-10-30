@@ -347,4 +347,8 @@ applications that come with the platform
         <permission name="android.permission.MANAGE_DYNAMIC_SYSTEM"/>
     </privapp-permissions>
 
+    <privapp-permissions package="com.android.serialchat">
+        <permission name="android.permission.SERIAL_PORT"/>
+    </privapp-permissions>
+
 </permissions>

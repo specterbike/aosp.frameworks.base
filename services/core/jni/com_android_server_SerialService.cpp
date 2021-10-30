@@ -40,7 +40,7 @@ static jobject android_server_SerialService_open(JNIEnv *env, jobject /* thiz */
 
     int fd = open(pathStr, O_RDWR | O_NOCTTY);
     if (fd < 0) {
-        ALOGE("could not open %s", pathStr);
+        ALOGE("could not open %s error %d", pathStr, fd);
         env->ReleaseStringUTFChars(path, pathStr);
         return NULL;
     }
