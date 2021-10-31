@@ -18,4 +18,6 @@ android_test {
     name: "GpioSample",
     srcs: ["**/*.java"],
     platform_apis: true,
+    certificate: "platform",
+    privileged: true,
 }

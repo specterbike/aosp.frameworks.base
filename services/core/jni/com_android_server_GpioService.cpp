@@ -13,6 +13,8 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 
+#define BUFFER_SIZE (256)
+
 namespace android
 {
 
@@ -25,19 +27,22 @@ static struct parcel_file_descriptor_offsets_t
 static jobject android_server_GpioService_open(JNIEnv *env, jobject /* thiz */, jint gpio, jstring direction)
 {
     char buf[BUFFER_SIZE];
-    char *directionStr;
+    const char *directionStr;
  
     // Export GPIO if not exported yet
 
-    fd = open("/sys/class/gpio/export", O_WRONLY);
+    int fd = open("/sys/class/gpio/export", O_WRONLY);
     if(fd < 0){
         ALOGE("%s", "Error opening export file in write mode");
         return NULL;
     }
-    fprintf(fd, "%d\n", gpio);
+
+    memset(buf,0,sizeof(buf));
+    sprintf(buf, "%d", gpio); 
+    write(fd, buf, strlen(buf));
     close(fd);
 
-    memset(buf,'',sizeof(buf));
+    memset(buf,0,sizeof(buf));
     sprintf(buf, "/sys/class/gpio/gpio%d/direction", gpio);
 
     fd = open(buf, O_WRONLY);
@@ -47,12 +52,16 @@ static jobject android_server_GpioService_open(JNIEnv *env, jobject /* thiz */, 
     }
 
     directionStr = env->GetStringUTFChars(direction, NULL);
-    fprintf(fd, "%s\n", directionStr);
+
+    memset(buf,0,sizeof(buf));
+    sprintf(buf, "%s", directionStr); 
+    write(fd, buf, strlen(buf));
+
     close(fd);
 
     env->ReleaseStringUTFChars(direction, directionStr);
 
-    memset(buf,'',sizeof(buf));
+    memset(buf,0,sizeof(buf));
     sprintf(buf, "/sys/class/gpio/gpio%d/value", gpio);
 
     // Wrap in a ParcelFileDescriptor

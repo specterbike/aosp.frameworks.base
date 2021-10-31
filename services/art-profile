@@ -1702,6 +1702,7 @@ HSPLcom/android/server/SensorPrivacyService$SensorPrivacyServiceImpl;->readPersi
 HSPLcom/android/server/SensorPrivacyService$SensorPrivacyServiceImpl;->removeSensorPrivacyListener(Landroid/hardware/ISensorPrivacyListener;)V
 HSPLcom/android/server/SensorPrivacyService;->onStart()V
 HSPLcom/android/server/SerialService;-><init>(Landroid/content/Context;)V
+HSPLcom/android/server/GpioService;-><init>(Landroid/content/Context;)V
 HSPLcom/android/server/ServiceThread;-><init>(Ljava/lang/String;IZ)V
 HSPLcom/android/server/ServiceThread;->run()V
 PLcom/android/server/ServiceWatcher$1;->onPackageAdded(Ljava/lang/String;I)V
@@ -18422,6 +18423,7 @@ Lcom/android/server/SensorPrivacyService$SensorPrivacyHandler;
 Lcom/android/server/SensorPrivacyService$SensorPrivacyServiceImpl;
 Lcom/android/server/SensorPrivacyService;
 Lcom/android/server/SerialService;
+Lcom/android/server/GpioService;
 Lcom/android/server/ServiceThread;
 Lcom/android/server/ServiceWatcher$1;
 Lcom/android/server/ServiceWatcher$2;

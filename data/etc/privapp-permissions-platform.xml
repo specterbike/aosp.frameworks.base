@@ -351,4 +351,8 @@ applications that come with the platform
         <permission name="android.permission.SERIAL_PORT"/>
     </privapp-permissions>
 
+    <privapp-permissions package="com.android.gpiosample">
+        <permission name="android.permission.GPIO"/>
+    </privapp-permissions>
+
 </permissions>

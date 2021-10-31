@@ -892,6 +892,7 @@ public final class SystemServer {
         NsdService serviceDiscovery = null;
         WindowManagerService wm = null;
         SerialService serial = null;
+        GpioService gpio = null;
         NetworkTimeUpdateService networkTimeUpdater = null;
         InputManagerService inputManager = null;
         TelephonyRegistry telephonyRegistry = null;
@@ -1594,6 +1595,16 @@ public final class SystemServer {
                 }
                 traceEnd();
             }
+
+            traceBeginAndSlog("StartGpioService");
+            try {
+                // Gpio support
+                gpio = new GpioService(context);
+                ServiceManager.addService(Context.GPIO_SERVICE, gpio);
+            } catch (Throwable e) {
+                Slog.e(TAG, "Failure starting GpioService", e);
+            }
+            traceEnd();
 
             traceBeginAndSlog("StartHardwarePropertiesManagerService");
             try {
