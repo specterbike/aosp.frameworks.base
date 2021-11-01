@@ -42,7 +42,13 @@ public class GpioSample extends Activity implements Runnable {
     private static final int ASCII_PRESSED = 48;
     private static final int ASCII_NOT_PRESSED = 49;
 
-    private static final int[] GPIO_BUTTONS = new int[]{12, 34, 46, 93};
+    private static final int[] GPIO_BUTTONS = new int[]{12, 34, 93, 46};
+    private static final String[] GPIO_NAMES = new String[]{
+        "Left button 1",
+        "Left button 2",
+        "Right button 1",
+        "Right button 2",
+    };
     private static final int POLLING_TIMEOUT_MS = 10000;
 
     private static final int MESSAGE_LOG = 1;
@@ -75,7 +81,7 @@ public class GpioSample extends Activity implements Runnable {
                 String action = (result == ASCII_PRESSED) ? "pressed" : "released";
 
                 Message m = Message.obtain(mHandler, MESSAGE_LOG);
-                m.obj = "GPIO" + GPIO_BUTTONS[index] + " " + action + "\n";
+                m.obj = GPIO_NAMES[index] + " " + action + "\n";
                 mHandler.sendMessage(m);
             }
 
