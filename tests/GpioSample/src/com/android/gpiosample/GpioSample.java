@@ -36,7 +36,8 @@ public class GpioSample extends Activity implements Runnable {
 
     private static final String TAG = "GpioSample";
 
-    private static final int ASCII_ONE = 49;
+    private static final int ASCII_PRESSED = 48;
+    private static final int ASCII_NOT_PRESSED = 49;
 
     private static final int[] GPIO_BUTTONS = new int[]{12, 34, 46, 93};
     private static final int POLLING_TIMEOUT_MS = 10000;
@@ -59,7 +60,7 @@ public class GpioSample extends Activity implements Runnable {
 
         try {
             int result = mInputStreams.get(index).read();
-            Log.d(TAG, "READ GPIO " + GPIO_BUTTONS[index] + ": " + (result == ASCII_ONE));
+            Log.d(TAG, "READ GPIO " + GPIO_BUTTONS[index] + ": " + (result == ASCII_PRESSED));
         } catch (IOException e) {
             Log.e(TAG,"ERROR READING", e);
         }
