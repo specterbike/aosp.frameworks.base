@@ -31,6 +31,9 @@ import java.util.ArrayList;
 import java.io.FileDescriptor;
 import java.io.FileInputStream;
 import java.io.IOException;
+import android.widget.TextView;
+import android.os.Handler;
+import android.os.Message;
 
 public class GpioSample extends Activity implements Runnable {
 
@@ -42,27 +45,46 @@ public class GpioSample extends Activity implements Runnable {
     private static final int[] GPIO_BUTTONS = new int[]{12, 34, 46, 93};
     private static final int POLLING_TIMEOUT_MS = 10000;
 
+    private static final int MESSAGE_LOG = 1;
+
     private GpioManager mGpioManager;
+
+    private TextView mLog;
 
     private ArrayList<ParcelFileDescriptor> mParcelFileDescriptors = new ArrayList<>();
     private ArrayList<FileDescriptor> mFileDescriptors = new ArrayList<>();
     private ArrayList<FileInputStream> mInputStreams = new ArrayList<>();
 
-    private void readGpio(int index) {
+    private void readGpio(int index, boolean firstRead) {
         Log.d(TAG, "READING GPIOS");
 
-        try {
-            mInputStreams.get(index).skip(-1);
-        } catch (IOException e) {
-            // The first skip will yield an error because we're already at the start of the file. Ignore it.
-            Log.d(TAG,"ERROR SKIPPING (expected on the first run)");
+        if (!firstRead) {
+            try {
+                    mInputStreams.get(index).skip(-1);
+            } catch (IOException e) {
+                // The first skip will yield an error because we're already at the start of the file. Ignore it.
+                Log.d(TAG,"ERROR SKIPPING (expected on the first run)");
+            }
         }
 
         try {
             int result = mInputStreams.get(index).read();
             Log.d(TAG, "READ GPIO " + GPIO_BUTTONS[index] + ": " + (result == ASCII_PRESSED));
+
+            if (!firstRead) {
+                String action = (result == ASCII_PRESSED) ? "pressed" : "released";
+
+                Message m = Message.obtain(mHandler, MESSAGE_LOG);
+                m.obj = "GPIO" + GPIO_BUTTONS[index] + " " + action + "\n";
+                mHandler.sendMessage(m);
+            }
+
         } catch (IOException e) {
             Log.e(TAG,"ERROR READING", e);
+
+            Message m = Message.obtain(mHandler, MESSAGE_LOG);
+            m.obj = "GPIO" + GPIO_BUTTONS[index] + " error " + e + "\n";
+            mHandler.sendMessage(m);
         }
     }
 
@@ -70,8 +92,12 @@ public class GpioSample extends Activity implements Runnable {
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        setContentView(R.layout.gpio_sample);
+        mLog = (TextView)findViewById(R.id.log);
+
+        mGpioManager = (GpioManager)getSystemService(Context.GPIO_SERVICE);
+
         try {
-            mGpioManager = (GpioManager)getSystemService(Context.GPIO_SERVICE);
 
             for (int gpio : GPIO_BUTTONS) {
                 ParcelFileDescriptor parcelFileDescriptor = mGpioManager.openGpioPort(gpio, "in");
@@ -83,6 +109,8 @@ public class GpioSample extends Activity implements Runnable {
                 mInputStreams.add(inputStream);
             }
 
+            new Thread(this).start();
+
         } catch (IOException e) {
             Log.d(TAG, "ERROR: " + e);
         }
@@ -91,12 +119,28 @@ public class GpioSample extends Activity implements Runnable {
     @Override
     public void onResume() {
         super.onResume();
+    }
 
-        for (int i = 0; i < mFileDescriptors.size(); i++) {
-            readGpio(i);
+    @Override
+    public void onPause() {
+        super.onPause();
+    }
+
+    @Override
+    public void onDestroy() {
+        for (ParcelFileDescriptor descriptor : mParcelFileDescriptors) {
+            try {
+                descriptor.close();
+            } catch (IOException e) {
+                Log.e(TAG, "Error closing", e);
+            }
         }
 
-        new Thread(this).start();
+        mParcelFileDescriptors.clear();
+        mFileDescriptors.clear();
+        mInputStreams.clear();
+
+        super.onDestroy();
     }
 
     public void run() {
@@ -112,6 +156,9 @@ public class GpioSample extends Activity implements Runnable {
             descriptor.fd = mFileDescriptors.get(i);
             descriptor.events = (short) OsConstants.POLLPRI;
             descriptors[i] = descriptor;
+
+            // Read the GPIO once to prevent the poll from returning immediately on the first run
+            readGpio(i, true);
         }
 
         while (ret >= 0) {
@@ -127,7 +174,7 @@ public class GpioSample extends Activity implements Runnable {
                     for (int i = 0; i < descriptors.length; i++) {
 
                         if ((descriptors[i].revents & OsConstants.POLLPRI) != 0) {
-                            readGpio(i);
+                            readGpio(i, false);
                         }
                     }
                 }
@@ -140,6 +187,17 @@ public class GpioSample extends Activity implements Runnable {
         }
         Log.d(TAG, "thread out");
     }
+
+    Handler mHandler = new Handler() {
+        @Override
+        public void handleMessage(Message msg) {
+            switch (msg.what) {
+                case MESSAGE_LOG:
+                    mLog.setText((String)msg.obj + mLog.getText());
+                    break;
+             }
+        }
+    };
 }
 
 
