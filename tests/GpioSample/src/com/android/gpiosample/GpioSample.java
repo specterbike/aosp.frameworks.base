@@ -31,7 +31,12 @@ public class GpioSample extends Activity {
 
     private static final String TAG = "GpioSample";
 
+    private static final int ASCII_ONE = 49;
+
     private GpioManager mGpioManager;
+    private ParcelFileDescriptor mGpio;
+    private FileDescriptor mFileDescriptor;
+    private FileInputStream mInputStream;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -39,12 +44,26 @@ public class GpioSample extends Activity {
 
         try {
             mGpioManager = (GpioManager)getSystemService(Context.GPIO_SERVICE);
-            ParcelFileDescriptor descriptor = mGpioManager.openGpioPort(110, "in");
-            FileDescriptor file = descriptor.getFileDescriptor();
-            FileInputStream is = new FileInputStream(file);
-            Log.d(TAG, "READING GPIO 110");
-            int result = is.read();
-            Log.d(TAG, "READ GPIO: " + result);
+            mGpio = mGpioManager.openGpioPort(12, "in");
+            mFileDescriptor = mGpio.getFileDescriptor();
+            mInputStream = new FileInputStream(mFileDescriptor);
+            Log.d(TAG, "READING GPIO 12");
+            int result = mInputStream.read();
+            Log.d(TAG, "READ GPIO: " + (result == ASCII_ONE));
+        } catch (IOException e) {
+            Log.d(TAG, "ERROR: " + e);
+        }
+    }
+
+    @Override
+    public void onResume() {
+        super.onResume();
+
+        try {
+            Log.d(TAG, "READING GPIO 12");
+            mInputStream.skip(-1);
+            int result = mInputStream.read();
+            Log.d(TAG, "READ GPIO: " + (result == ASCII_ONE));
         } catch (IOException e) {
             Log.d(TAG, "ERROR: " + e);
         }

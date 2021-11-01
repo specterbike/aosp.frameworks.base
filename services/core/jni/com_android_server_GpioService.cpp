@@ -63,10 +63,16 @@ static jobject android_server_GpioService_open(JNIEnv *env, jobject /* thiz */, 
 
     memset(buf,0,sizeof(buf));
     sprintf(buf, "/sys/class/gpio/gpio%d/value", gpio);
+    fd = open(buf, O_RDWR);
+    if(fd < 0){
+        ALOGE("%s", "Error opening value file in read-write mode");
+        return NULL;
+    }
 
     // Wrap in a ParcelFileDescriptor
     jobject fileDescriptor = jniCreateFileDescriptor(env, fd);
     if (fileDescriptor == NULL) {
+        ALOGE("%s", "Error creating JNI file descriptor");
         return NULL;
     }
     return env->NewObject(gParcelFileDescriptorOffsets.mClass,
