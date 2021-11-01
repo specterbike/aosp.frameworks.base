@@ -13,7 +13,8 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 
-#define BUFFER_SIZE (256)
+#define MAX_BUF (256)
+#define SYSFS_GPIO_DIR "/sys/class/gpio"
 
 namespace android
 {
@@ -24,48 +25,97 @@ static struct parcel_file_descriptor_offsets_t
     jmethodID mConstructor;
 } gParcelFileDescriptorOffsets;
 
+static int gpio_export(int gpio)
+{
+	int fd, len;
+	char buf[MAX_BUF];
+
+	fd = open(SYSFS_GPIO_DIR "/export", O_WRONLY);
+	if (fd < 0) {
+		ALOGE("Failed to export GPIO %d: %d\n", gpio, fd);
+		return fd;
+	}
+
+	len = snprintf(buf, sizeof(buf), "%d", gpio);
+	write(fd, buf, len);
+	close(fd);
+
+	return 0;
+}
+
+static int gpio_set_dir(int gpio, const char *direction)
+{
+	int fd, len;
+	char buf[MAX_BUF];
+
+	len = snprintf(buf, sizeof(buf), SYSFS_GPIO_DIR  "/gpio%d/direction", gpio);
+
+	fd = open(buf, O_WRONLY);
+	if (fd < 0) {
+		ALOGE("Failed to set GPIO %d direction to %s: %d\n", gpio, direction, fd);
+		return fd;
+	}
+
+    write(fd, direction, strlen(direction) + 1);
+	close(fd);
+	return 0;
+}
+
+static int gpio_set_edge(int gpio, const char *edge)
+{
+	int fd, len;
+	char buf[MAX_BUF];
+
+	len = snprintf(buf, sizeof(buf), SYSFS_GPIO_DIR "/gpio%d/edge", gpio);
+
+	fd = open(buf, O_WRONLY);
+	if (fd < 0) {
+		ALOGE("Failed to set GPIO %d edge to %s: %d\n", gpio, edge, fd);
+		return fd;
+	}
+
+	write(fd, edge, strlen(edge) + 1);
+	close(fd);
+	return 0;
+}
+
+static int gpio_fd_open(int gpio)
+{
+	int fd, len;
+	char buf[MAX_BUF];
+
+	len = snprintf(buf, sizeof(buf), SYSFS_GPIO_DIR "/gpio%d/value", gpio);
+
+	fd = open(buf, O_RDWR);
+	if (fd < 0) {
+		ALOGE("Failed to open GPIO %d: %d\n", gpio, fd);
+	}
+	return fd;
+}
+
 static jobject android_server_GpioService_open(JNIEnv *env, jobject /* thiz */, jint gpio, jstring direction)
 {
-    char buf[BUFFER_SIZE];
     const char *directionStr;
- 
-    // Export GPIO if not exported yet
 
-    int fd = open("/sys/class/gpio/export", O_WRONLY);
-    if(fd < 0){
-        ALOGE("%s", "Error opening export file in write mode");
-        return NULL;
-    }
-
-    memset(buf,0,sizeof(buf));
-    sprintf(buf, "%d", gpio); 
-    write(fd, buf, strlen(buf));
-    close(fd);
-
-    memset(buf,0,sizeof(buf));
-    sprintf(buf, "/sys/class/gpio/gpio%d/direction", gpio);
-
-    fd = open(buf, O_WRONLY);
-    if(fd < 0){
-        ALOGE("%s", "Error opening direction file in write mode");
+    // Export GPIO
+    if (gpio_export(gpio) < 0) {
         return NULL;
     }
 
     directionStr = env->GetStringUTFChars(direction, NULL);
-
-    memset(buf,0,sizeof(buf));
-    sprintf(buf, "%s", directionStr); 
-    write(fd, buf, strlen(buf));
-
-    close(fd);
+    if (gpio_set_dir(gpio, directionStr) < 0) {
+        env->ReleaseStringUTFChars(direction, directionStr);
+        return NULL;
+    }
 
     env->ReleaseStringUTFChars(direction, directionStr);
 
-    memset(buf,0,sizeof(buf));
-    sprintf(buf, "/sys/class/gpio/gpio%d/value", gpio);
-    fd = open(buf, O_RDWR);
-    if(fd < 0){
-        ALOGE("%s", "Error opening value file in read-write mode");
+    if (gpio_set_edge(gpio, "falling") < 0) {
+        return NULL;
+    }
+
+    int fd = gpio_fd_open(gpio);
+    if (fd < 0) {
         return NULL;
     }
 
@@ -73,6 +123,7 @@ static jobject android_server_GpioService_open(JNIEnv *env, jobject /* thiz */, 
     jobject fileDescriptor = jniCreateFileDescriptor(env, fd);
     if (fileDescriptor == NULL) {
         ALOGE("%s", "Error creating JNI file descriptor");
+        close(fd);
         return NULL;
     }
     return env->NewObject(gParcelFileDescriptorOffsets.mClass,

@@ -22,12 +22,16 @@ import android.hardware.GpioManager;
 import android.os.Bundle;
 import android.os.ParcelFileDescriptor;
 import android.util.Log;
+import android.system.Os;
+import android.system.StructPollfd;
+import android.system.OsConstants;
+import android.system.ErrnoException;
 import java.nio.ByteBuffer;
 import java.io.FileDescriptor;
 import java.io.FileInputStream;
 import java.io.IOException;
 
-public class GpioSample extends Activity {
+public class GpioSample extends Activity implements Runnable {
 
     private static final String TAG = "GpioSample";
 
@@ -38,6 +42,24 @@ public class GpioSample extends Activity {
     private FileDescriptor mFileDescriptor;
     private FileInputStream mInputStream;
 
+    private void readGpio() {
+        Log.d(TAG, "READING GPIO");
+
+        try {
+            mInputStream.skip(-1);
+        } catch (IOException e) {
+            // The first skip will yield an error because we're already at the start of the file. Ignore it.
+            Log.d(TAG,"ERROR SKIPPING (expected on the first run)");
+        }
+
+        try {
+            int result = mInputStream.read();
+            Log.d(TAG, "READ GPIO: " + (result == ASCII_ONE));
+        } catch (IOException e) {
+            Log.e(TAG,"ERROR READING", e);
+        }
+    }
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -47,9 +69,6 @@ public class GpioSample extends Activity {
             mGpio = mGpioManager.openGpioPort(12, "in");
             mFileDescriptor = mGpio.getFileDescriptor();
             mInputStream = new FileInputStream(mFileDescriptor);
-            Log.d(TAG, "READING GPIO 12");
-            int result = mInputStream.read();
-            Log.d(TAG, "READ GPIO: " + (result == ASCII_ONE));
         } catch (IOException e) {
             Log.d(TAG, "ERROR: " + e);
         }
@@ -59,14 +78,37 @@ public class GpioSample extends Activity {
     public void onResume() {
         super.onResume();
 
-        try {
-            Log.d(TAG, "READING GPIO 12");
-            mInputStream.skip(-1);
-            int result = mInputStream.read();
-            Log.d(TAG, "READ GPIO: " + (result == ASCII_ONE));
-        } catch (IOException e) {
-            Log.d(TAG, "ERROR: " + e);
+        readGpio();
+
+        new Thread(this).start();
+    }
+
+    public void run() {
+        Log.d(TAG, "run");
+
+        int ret = 0;
+        byte[] buffer = new byte[1024];
+        while (ret >= 0) {
+            try {
+                Log.d(TAG, "polling");
+
+                StructPollfd descriptors = new StructPollfd();
+                descriptors.fd = mFileDescriptor;
+                descriptors.events = (short) OsConstants.POLLPRI;
+
+                ret = Os.poll(new StructPollfd[]{descriptors}, 10000);
+
+                if (ret > 0 ) {
+                    readGpio();
+                }
+
+            } catch (ErrnoException e) {
+                Log.e(TAG, "poll failed", e);
+                break;
+            }
+
         }
+        Log.d(TAG, "thread out");
     }
 }
 
