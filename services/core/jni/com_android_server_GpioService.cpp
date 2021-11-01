@@ -25,24 +25,6 @@ static struct parcel_file_descriptor_offsets_t
     jmethodID mConstructor;
 } gParcelFileDescriptorOffsets;
 
-static int gpio_export(int gpio)
-{
-	int fd, len;
-	char buf[MAX_BUF];
-
-	fd = open(SYSFS_GPIO_DIR "/export", O_WRONLY);
-	if (fd < 0) {
-		ALOGE("Failed to export GPIO %d: %d\n", gpio, fd);
-		return fd;
-	}
-
-	len = snprintf(buf, sizeof(buf), "%d", gpio);
-	write(fd, buf, len);
-	close(fd);
-
-	return 0;
-}
-
 static int gpio_set_dir(int gpio, const char *direction)
 {
 	int fd, len;
@@ -97,11 +79,6 @@ static jobject android_server_GpioService_open(JNIEnv *env, jobject /* thiz */, 
 {
     const char *directionStr;
 
-    // Export GPIO
-    if (gpio_export(gpio) < 0) {
-        return NULL;
-    }
-
     directionStr = env->GetStringUTFChars(direction, NULL);
     if (gpio_set_dir(gpio, directionStr) < 0) {
         env->ReleaseStringUTFChars(direction, directionStr);
@@ -110,7 +87,7 @@ static jobject android_server_GpioService_open(JNIEnv *env, jobject /* thiz */, 
 
     env->ReleaseStringUTFChars(direction, directionStr);
 
-    if (gpio_set_edge(gpio, "falling") < 0) {
+    if (gpio_set_edge(gpio, "both") < 0) {
         return NULL;
     }
 

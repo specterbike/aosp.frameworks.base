@@ -27,6 +27,7 @@ import android.system.StructPollfd;
 import android.system.OsConstants;
 import android.system.ErrnoException;
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
 import java.io.FileDescriptor;
 import java.io.FileInputStream;
 import java.io.IOException;
@@ -37,24 +38,28 @@ public class GpioSample extends Activity implements Runnable {
 
     private static final int ASCII_ONE = 49;
 
-    private GpioManager mGpioManager;
-    private ParcelFileDescriptor mGpio;
-    private FileDescriptor mFileDescriptor;
-    private FileInputStream mInputStream;
+    private static final int[] GPIO_BUTTONS = new int[]{12, 34, 46, 93};
+    private static final int POLLING_TIMEOUT_MS = 10000;
 
-    private void readGpio() {
-        Log.d(TAG, "READING GPIO");
+    private GpioManager mGpioManager;
+
+    private ArrayList<ParcelFileDescriptor> mParcelFileDescriptors = new ArrayList<>();
+    private ArrayList<FileDescriptor> mFileDescriptors = new ArrayList<>();
+    private ArrayList<FileInputStream> mInputStreams = new ArrayList<>();
+
+    private void readGpio(int index) {
+        Log.d(TAG, "READING GPIOS");
 
         try {
-            mInputStream.skip(-1);
+            mInputStreams.get(index).skip(-1);
         } catch (IOException e) {
             // The first skip will yield an error because we're already at the start of the file. Ignore it.
             Log.d(TAG,"ERROR SKIPPING (expected on the first run)");
         }
 
         try {
-            int result = mInputStream.read();
-            Log.d(TAG, "READ GPIO: " + (result == ASCII_ONE));
+            int result = mInputStreams.get(index).read();
+            Log.d(TAG, "READ GPIO " + GPIO_BUTTONS[index] + ": " + (result == ASCII_ONE));
         } catch (IOException e) {
             Log.e(TAG,"ERROR READING", e);
         }
@@ -66,9 +71,17 @@ public class GpioSample extends Activity implements Runnable {
 
         try {
             mGpioManager = (GpioManager)getSystemService(Context.GPIO_SERVICE);
-            mGpio = mGpioManager.openGpioPort(12, "in");
-            mFileDescriptor = mGpio.getFileDescriptor();
-            mInputStream = new FileInputStream(mFileDescriptor);
+
+            for (int gpio : GPIO_BUTTONS) {
+                ParcelFileDescriptor parcelFileDescriptor = mGpioManager.openGpioPort(gpio, "in");
+                FileDescriptor fileDescriptor = parcelFileDescriptor.getFileDescriptor();
+                FileInputStream inputStream = new FileInputStream(fileDescriptor);
+
+                mParcelFileDescriptors.add(parcelFileDescriptor);
+                mFileDescriptors.add(fileDescriptor);
+                mInputStreams.add(inputStream);
+            }
+
         } catch (IOException e) {
             Log.d(TAG, "ERROR: " + e);
         }
@@ -78,7 +91,9 @@ public class GpioSample extends Activity implements Runnable {
     public void onResume() {
         super.onResume();
 
-        readGpio();
+        for (int i = 0; i < mFileDescriptors.size(); i++) {
+            readGpio(i);
+        }
 
         new Thread(this).start();
     }
@@ -87,19 +102,33 @@ public class GpioSample extends Activity implements Runnable {
         Log.d(TAG, "run");
 
         int ret = 0;
-        byte[] buffer = new byte[1024];
+
+        // Set up the polling descriptors
+        StructPollfd[] descriptors = new StructPollfd[mFileDescriptors.size()];
+
+        for (int i = 0; i < mFileDescriptors.size(); i++) {
+            StructPollfd descriptor = new StructPollfd();
+            descriptor.fd = mFileDescriptors.get(i);
+            descriptor.events = (short) OsConstants.POLLPRI;
+            descriptors[i] = descriptor;
+        }
+
         while (ret >= 0) {
             try {
                 Log.d(TAG, "polling");
 
-                StructPollfd descriptors = new StructPollfd();
-                descriptors.fd = mFileDescriptor;
-                descriptors.events = (short) OsConstants.POLLPRI;
-
-                ret = Os.poll(new StructPollfd[]{descriptors}, 10000);
+                ret = Os.poll(descriptors, POLLING_TIMEOUT_MS);
 
                 if (ret > 0 ) {
-                    readGpio();
+
+                    // An event was returned. Check which descriptor fired an event
+
+                    for (int i = 0; i < descriptors.length; i++) {
+
+                        if ((descriptors[i].revents & OsConstants.POLLPRI) != 0) {
+                            readGpio(i);
+                        }
+                    }
                 }
 
             } catch (ErrnoException e) {
