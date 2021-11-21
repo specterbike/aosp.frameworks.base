@@ -353,6 +353,7 @@ applications that come with the platform
 
     <privapp-permissions package="com.android.gpiosample">
         <permission name="android.permission.GPIO"/>
+        <permission name="android.permission.SERIAL_PORT"/>
     </privapp-permissions>
 
     <privapp-permissions package="com.specter.hud">
