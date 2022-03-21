@@ -361,4 +361,9 @@ applications that come with the platform
         <permission name="android.permission.GPIO"/>
     </privapp-permissions>
 
+    <privapp-permissions package="com.specter.updater">
+        <permission name="android.permission.INSTALL_PACKAGES"/>
+        <permission name="android.permission.DELETE_PACKAGES"/>
+    </privapp-permissions>
+
 </permissions>
