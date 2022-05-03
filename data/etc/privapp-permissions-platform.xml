@@ -359,6 +359,8 @@ applications that come with the platform
     <privapp-permissions package="com.specter.hud">
         <permission name="android.permission.SERIAL_PORT"/>
         <permission name="android.permission.GPIO"/>
+        <permission name="android.permission.BLUETOOTH_PRIVILEGED"/>
+        <permission name="android.permission.SHUTDOWN"/>
     </privapp-permissions>
 
     <privapp-permissions package="com.specter.updater">
