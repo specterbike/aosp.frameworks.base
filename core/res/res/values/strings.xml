@@ -3201,7 +3201,7 @@
       has violated its self-enforced StrictMode policy.</string>
 
     <!-- [CHAR LIMIT=40] Title of dialog that is shown when performing a system update. -->
-    <string name="android_upgrading_title" product="default">Phone is updating\u2026</string>
+    <string name="android_upgrading_title" product="default">Bike is updating\u2026</string>
     <!-- [CHAR LIMIT=40] Title of dialog that is shown when performing a system update. -->
     <string name="android_upgrading_title" product="tablet">Tablet is updating\u2026</string>
     <!-- [CHAR LIMIT=40] Title of dialog that is shown when performing a system update. -->
