@@ -362,6 +362,8 @@ applications that come with the platform
         <permission name="android.permission.SHUTDOWN"/>
         <permission name="android.permission.BLUETOOTH_PRIVILEGED"/>
         <permission name="android.permission.SHUTDOWN"/>
+        <permission name="android.permission.INSTALL_PACKAGES"/>
+        <permission name="android.permission.DELETE_PACKAGES"/>
     </privapp-permissions>
 
     <privapp-permissions package="com.specter.updater">
